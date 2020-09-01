@@ -61,8 +61,8 @@ func (w *worker) Looper() {
 	for {
 		select {
 		case <-w.ticker.C:
-			go w.SendRequest("http://ipv4.lookup.test-ipv6.com/ip/", w.ipv4)
-			go w.SendRequest("http://ipv6.lookup.test-ipv6.com/ip/", w.ipv6)
+			go w.SendRequest(Config.Lookups.V4Addr, w.ipv4)
+			go w.SendRequest(Config.Lookups.V6Addr, w.ipv6)
 		case <-w.stop:
 			w.ticker.Stop()
 			w.SetStatus(workflow.Task_Status_Stopped)
