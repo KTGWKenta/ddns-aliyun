@@ -2,19 +2,19 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
-	"gitlab.com/MGEs/Base/workflow"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/KTGWKenta/ddns-aliyun/config"
+	"github.com/KTGWKenta/ddns-aliyun/defines"
+	"github.com/pkg/errors"
+	"gitlab.com/MGEs/Base/workflow"
 )
 
 type ipResponse struct {
 	Ip string `json:"ip"`
 }
-
-var newIPV4Msg = workflow.NewMask("newIPV4", "new ipv4, {{addr}}")
-var newIPV6Msg = workflow.NewMask("newIPV6", "new ipv6, {{addr}}")
 
 type worker struct {
 	workflow.TaskMethods
@@ -40,17 +40,21 @@ func (w *worker) SendRequest(url string, addrChan chan string) {
 			resp.Body.Close()
 		}
 	}()
-
-	if req, err := http.NewRequest(
+	var err error
+	var req *http.Request
+	if req, err = http.NewRequest(
 		"GET", url, nil,
 	); err != nil {
-		panic(errors.Wrap(err, "failed to build request"))
-	} else if resp, err = w.httpClient.Do(req); err != nil {
-		panic(errors.Wrap(err, "failed to execute request"))
-	} else if body, err = ioutil.ReadAll(resp.Body); err != nil {
-		panic(errors.Wrap(err, "failed to read body"))
-	} else if err = json.Unmarshal(body, &result); err != nil {
-		panic(errors.Wrap(err, "failed to parse body"))
+		workflow.Throw(errors.Wrap(err, "failed to build request"), workflow.TlPanic)
+	}
+	if resp, err = w.httpClient.Do(req); err != nil {
+		workflow.Throw(errors.Wrap(err, "failed to execute request"), workflow.TlPanic)
+	}
+	if body, err = ioutil.ReadAll(resp.Body); err != nil {
+		workflow.Throw(errors.Wrap(err, "failed to read body"), workflow.TlPanic)
+	}
+	if err = json.Unmarshal(body, &result); err != nil {
+		workflow.Throw(errors.Wrap(err, "failed to parse body"), workflow.TlPanic)
 	}
 	addrChan <- result.Ip
 }
@@ -58,11 +62,13 @@ func (w *worker) SendRequest(url string, addrChan chan string) {
 func (w *worker) Looper() {
 	var lastIpv4 string
 	var lastIpv6 string
+	go w.SendRequest(config.Config.Lookups.V4Addr, w.ipv4)
+	go w.SendRequest(config.Config.Lookups.V6Addr, w.ipv6)
 	for {
 		select {
 		case <-w.ticker.C:
-			go w.SendRequest(Config.Lookups.V4Addr, w.ipv4)
-			go w.SendRequest(Config.Lookups.V6Addr, w.ipv6)
+			go w.SendRequest(config.Config.Lookups.V4Addr, w.ipv4)
+			go w.SendRequest(config.Config.Lookups.V6Addr, w.ipv6)
 		case <-w.stop:
 			w.ticker.Stop()
 			w.SetStatus(workflow.Task_Status_Stopped)
@@ -72,19 +78,21 @@ func (w *worker) Looper() {
 				break
 			}
 			lastIpv4 = ipv4
-			//ipv4Addr <- ipv4
-			workflow.Throw(workflow.NewSimpleThrowable(newIPV4Msg, map[string]string{
-				"addr": ipv4,
-			}), workflow.TlNotify)
+			if err := workflow.GlobalEvents().Publish(
+				defines.EVTUpdateIPV4, workflow.NewEventAction(nil, ipv4),
+			); err != nil {
+				workflow.Throw(err, workflow.TlError)
+			}
 		case ipv6 := <-w.ipv6:
 			if ipv6 == lastIpv6 {
 				break
 			}
 			lastIpv6 = ipv6
-			//ipv6Addr <- ipv6
-			workflow.Throw(workflow.NewSimpleThrowable(newIPV6Msg, map[string]string{
-				"addr": ipv6,
-			}), workflow.TlNotify)
+			if err := workflow.GlobalEvents().Publish(
+				defines.EVTUpdateIPV6, workflow.NewEventAction(nil, ipv6),
+			); err != nil {
+				workflow.Throw(err, workflow.TlError)
+			}
 		}
 	}
 }
@@ -93,7 +101,7 @@ func (w *worker) Start() error {
 	w.SetStatus(workflow.Task_Status_Staring)
 
 	w.httpClient = &http.Client{}
-	w.ticker = time.NewTicker(time.Second * 3)
+	w.ticker = time.NewTicker(time.Minute * 3)
 	w.stop = make(chan bool)
 	w.ipv4 = make(chan string)
 	w.ipv6 = make(chan string)

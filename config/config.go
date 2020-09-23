@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"gitlab.com/MGEs/Base/contexts"
@@ -7,11 +7,9 @@ import (
 )
 
 type STDomain struct {
-	Domain     string            `cued:"rootName"`
-	Provider   string            `cued:"provider"`
-	AuthArgs   map[string]string `cued:"authArgs"`
-	V4Prefixes []string          `cued:"v4Prefix"`
-	V6Prefixes []string          `cued:"v6Prefix"`
+	Provider string              `cued:"provider"`
+	AuthArgs map[string]string   `cued:"authArgs"`
+	Prefixes []map[string]string `cued:"prefixes"`
 }
 
 type STLookups struct {
@@ -22,16 +20,16 @@ type STLookups struct {
 }
 
 type STConfig struct {
-	Domains []STDomain
+	Domains map[string]STDomain
 	Lookups STLookups
 }
 
 var Config = STConfig{
-	Domains: []STDomain{},
+	Domains: map[string]STDomain{},
 	Lookups: STLookups{},
 }
 
-func initConfig() {
+func init() {
 	var err error
 	var configCtx contexts.Context
 	if configCtx, err = contexts.New(&Config.Domains); err != nil {
