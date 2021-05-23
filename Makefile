@@ -11,7 +11,6 @@ endif
 DIST_PATH:=$(BASE_PATH)/build/dist
 CFGS_PATH:=$(BASE_PATH)/build/config
 SCRIPT_PATH:=$(BASE_PATH)/build/script
-TITLE:=$(shell basename $(BASE_PATH))
 BUILD_TIME:=$(shell date +%Y-%m-%d--%T)
 
 PACKAGE:=$(shell go list -m)
@@ -36,7 +35,6 @@ print:
 	@echo SHELL:$(SHELL)
 	@echo BASE_PATH:$(BASE_PATH)
 	@echo SCRIPT_PATH:$(SCRIPT_PATH)
-	@echo TITLE:$(TITLE)
 	@echo BUILD_TIME:$(BUILD_TIME)
 	@echo -e "\n"
 
@@ -61,7 +59,7 @@ testCover:
 
 build:
 	@echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>making build<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-	bash $(SCRIPT_PATH)/build.sh $(DIST_PATH)/$(TITLE) package/version $(BASE_PATH)/cmd/$(APP_NAME)
+	bash $(SCRIPT_PATH)/build.sh $(DIST_PATH)/$(APP_NAME) package/version $(BASE_PATH)/cmd/$(APP_NAME)
 	@echo -e "\n"
 
 exportDefines:
