@@ -1,6 +1,9 @@
 package defines
 
 const (
+	FieldPathSep         = "."
+	ConfigCUEPackageName = "config"
+
 	IPTypeV4      = "v4"
 	IPTypeV6      = "v6"
 	EVTUpdateIPV6 = "ddns.ipUpdate.V6"

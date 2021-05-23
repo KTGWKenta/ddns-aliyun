@@ -1,14 +1,15 @@
 package providers
 
 import (
-	"strconv"
-
-	"github.com/KTGWKenta/ddns-aliyun/config"
-	"github.com/KTGWKenta/ddns-aliyun/defines"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/alidns"
-	"github.com/pkg/errors"
-	"gitlab.com/MGEs/Base/workflow"
+	"go.uber.org/zap"
+
+	"github.com/kentalee/errors"
+	"github.com/kentalee/log"
+
+	"github.com/kentalee/ddns/common/defines"
+	"github.com/kentalee/ddns/internal/common"
 )
 
 const (
@@ -36,7 +37,7 @@ type Aliyun struct {
 	records []*AliyunRecord
 }
 
-func (p *Aliyun) InitSession(domain string, config config.STDomain) error {
+func (p *Aliyun) InitSession(domain string, config common.STDomain) error {
 	var err error
 	var client *alidns.Client
 	var records []*AliyunRecord
@@ -45,12 +46,14 @@ func (p *Aliyun) InitSession(domain string, config config.STDomain) error {
 		config.AuthArgs[AliyunAuthFieldAccessKey],
 		config.AuthArgs[AliyunAuthFieldAccessSecret],
 	); err != nil {
-		return workflow.NewException(EMFailedToInitSession,
-			map[string]string{"keyName": "accessKey", "key": config.AuthArgs[AliyunAuthFieldAccessKey]}, err)
+		return errors.Because(EMFailedToInitSession, err,
+			zap.String("keyName", "accessKey"),
+			zap.String("key", config.AuthArgs[AliyunAuthFieldAccessKey]),
+		)
 	}
 	for i, prefix := range config.Prefixes {
 		if record, err := p.parseSubDomains(prefix); err != nil {
-			return errors.Wrapf(err, "failed to parse prefix #%d", i)
+			return errors.Note(err, zap.Int("prefix index", i))
 		} else {
 			records = append(records, record)
 		}
@@ -65,21 +68,21 @@ func (p *Aliyun) parseSubDomains(val map[string]string) (*AliyunRecord, error) {
 	recordObj := AliyunRecord{}
 	if ipType, ok := val[AliyunPrefixFieldIpType]; ok {
 		if ipType != defines.IPTypeV4 && ipType != defines.IPTypeV6 {
-			return nil, errors.New("invalid ip type")
+			return nil, errors.NewSysErr("invalid ip type")
 		}
 		recordObj.ipType = ipType
 	} else {
-		return nil, errors.New("ipType is required")
+		return nil, errors.NewSysErr("ipType is required")
 	}
 	if record, ok := val[AliyunPrefixFieldRecord]; ok {
 		recordObj.record = record
 	} else {
-		return nil, errors.New("record is required")
+		return nil, errors.NewSysErr("record is required")
 	}
 	if recordType, ok := val[AliyunPrefixFieldRecordType]; ok {
 		recordObj.recordType = recordType
 	} else {
-		return nil, errors.New("recordType is required")
+		return nil, errors.NewSysErr("recordType is required")
 	}
 	if line, ok := val[AliyunPrefixFieldLine]; ok {
 		recordObj.line = line
@@ -89,28 +92,19 @@ func (p *Aliyun) parseSubDomains(val map[string]string) (*AliyunRecord, error) {
 	return &recordObj, nil
 }
 
-var domainCheckResp = workflow.NewMask("domainCheckResp", "Domain: {{domain}}, Id: {{id}}")
-var newIPMsg = workflow.NewMask("newIP", "new ip{{type}}, {{addr}}")
-
 func (p *Aliyun) checkDomain() error {
 	req := alidns.CreateDescribeDomainInfoRequest()
 	req.DomainName = p.domain
 	response, err := p.client.DescribeDomainInfo(req)
 	if err != nil {
-		return workflow.NewException(EMDomainUnavailable,
-			map[string]string{"domain": p.domain}, err)
+		return errors.Because(EMDomainUnavailable, err, zap.String("domain", p.domain))
 	}
-	workflow.Throw(workflow.NewSimpleThrowable(domainCheckResp, map[string]string{
-		"id":     response.DomainId,
-		"domain": response.DomainName,
-	}), workflow.TlNotify)
+	log.With(
+		"id", response.DomainId,
+		"domain", response.DomainName,
+	).Info("domainCheckResp")
 	return nil
 }
-
-var EM_FailedToListDomainRecords = workflow.NewMask(
-	"FailedToListDomainRecords",
-	"failed to list domain records: {{domain}}, type:{{type}}, pn: {{pn}}, size:{{size}}",
-)
 
 func (p *Aliyun) getRecords() (map[string][]alidns.Record, error) {
 	const pageSize = int64(AliyunAPIMaxPageSize)
@@ -123,11 +117,11 @@ func (p *Aliyun) getRecords() (map[string][]alidns.Record, error) {
 	for i := int64(1); i*pageSize <= total; i++ {
 		lsResp, err := p.client.DescribeDomainRecords(lsReq)
 		if err != nil {
-			return nil, workflow.NewSimpleThrowable(EM_FailedToListDomainRecords, map[string]string{
-				"pn":     strconv.FormatInt(i, 10),
-				"size":   strconv.FormatInt(pageSize, 10),
-				"domain": p.domain,
-			})
+			return nil, errors.Note(ErrFailedToListDomainRecords,
+				zap.Int64("pn", i),
+				zap.Int64("size", pageSize),
+				zap.String("domain", p.domain),
+			)
 		}
 		total = lsResp.TotalCount
 		for _, record := range lsResp.DomainRecords.Record {
@@ -137,12 +131,14 @@ func (p *Aliyun) getRecords() (map[string][]alidns.Record, error) {
 	return records, nil
 }
 
-func (p *Aliyun) Update(ipType, address string) error {
-	workflow.Throw(workflow.NewSimpleThrowable(newIPMsg, map[string]string{
-		"type": ipType,
-		"addr": address,
-	}), workflow.TlNotify)
+var (
+	ErrFailedToCreateRecord = errors.New("9caba9e400040005", "failed to create record")
+	ErrFailedToDeleteRecord = errors.New("9caba9e400040006", "failed to delete record")
+	ErrFailedToUpdateRecord = errors.New("9caba9e400040007", "failed to update record")
+)
 
+func (p *Aliyun) Update(ipType, address string) error {
+	log.With("type", ipType, "addr", address).Info("newIP")
 	var err error
 	var records map[string][]alidns.Record
 	if records, err = p.getRecords(); err != nil {
@@ -178,7 +174,7 @@ func (p *Aliyun) Update(ipType, address string) error {
 				req := alidns.CreateOperateBatchDomainRequest()
 				req.DomainRecordInfo = &batchArr
 				if _, err := p.client.OperateBatchDomain(req); err != nil {
-					workflow.Throw(errors.Errorf("failed to delete record for `%s`:%v", p.domain, err), workflow.TlError)
+					log.Error(errors.Note(ErrFailedToDeleteRecord, zap.String("domain", p.domain)))
 				}
 			} else if len(NormalRecords) == 1 {
 				if NormalRecords[0].Value != address {
@@ -189,7 +185,7 @@ func (p *Aliyun) Update(ipType, address string) error {
 					req.Value = address
 					req.Type = prefix.recordType
 					if _, err := p.client.UpdateDomainRecord(req); err != nil {
-						workflow.Throw(errors.Errorf("failed to update record for `%s`:%v", p.domain, err), workflow.TlError)
+						log.Error(errors.Note(ErrFailedToUpdateRecord, zap.String("domain", p.domain)))
 					}
 				}
 				continue
@@ -202,7 +198,10 @@ func (p *Aliyun) Update(ipType, address string) error {
 		req.Value = address
 		req.Type = prefix.recordType
 		if _, err := p.client.AddDomainRecord(req); err != nil {
-			workflow.Throw(errors.Errorf("failed to add record for `%s`:%v", p.domain, err), workflow.TlError)
+			log.Error(errors.Because(ErrFailedToCreateRecord, err,
+				zap.String("domain", p.domain),
+				zap.String("address", address),
+				zap.String("type", prefix.recordType)))
 		}
 	}
 	return nil

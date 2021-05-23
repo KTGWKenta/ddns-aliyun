@@ -1,16 +1,12 @@
-module github.com/KTGWKenta/ddns-aliyun
+module github.com/kentalee/ddns
 
-go 1.14
+go 1.16
 
 require (
-	github.com/aliyun/alibaba-cloud-sdk-go v1.61.471
-	github.com/jmespath/go-jmespath v0.3.0 // indirect
-	github.com/json-iterator/go v1.1.10 // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
-	github.com/pkg/errors v0.9.1
-	github.com/prometheus/common v0.4.0
-	gitlab.com/MGEs/Base v0.3.15-alpha
-	gitlab.com/MGEs/CUEd v0.1.5-alpha
-	gopkg.in/ini.v1 v1.61.0 // indirect
-	gopkg.in/yaml.v2 v2.2.8 // indirect
+	cuelang.org/go v0.3.2
+	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1103
+	github.com/kentalee/errors v0.0.1
+	github.com/kentalee/eventbus v0.1.1
+	github.com/kentalee/log v0.0.1
+	go.uber.org/zap v1.16.0
 )
