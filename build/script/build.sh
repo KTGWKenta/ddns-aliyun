@@ -46,11 +46,10 @@ fi
 LD_VERSIONFLAGS=""
 while read line; do
   read SYMBOL VALUE < <(echo $line)
-  LD_VERSIONFLAGS=${LD_VERSIONFLAGS}" -X '${PackageVersion}.${SYMBOL}=${VALUE}'"
+  # shellcheck disable=SC2089
+  LD_VERSIONFLAGS="${LD_VERSIONFLAGS} -X '${PackageVersion}.${SYMBOL}=${VALUE}'"
 done <"${BUILDINFO}"
 
-echo $LD_VERSIONFLAGS
-
 # forgoing -i (incremental build) because it will be deprecated by tool chain.
-time GOOS=${GOOS} GOARCH=${GOARCH} ${GOBINARY} build ${V} ${GOBUILDFLAGS} ${GCFLAGS:+-gcflags "${GCFLAGS}"} -o ${PathDist} \
+time GOOS=${GOOS} GOARCH=${GOARCH} ${GOBINARY} build ${V} ${GOBUILDFLAGS} ${GCFLAGS:+-gcflags "${GCFLAGS}"} -o "${PathDist}" \
   -pkgdir=${GOPKG}/${GOOS}_${GOARCH} -ldflags "${LDFLAGS} ${LD_VERSIONFLAGS}" "${PathBuild}"
