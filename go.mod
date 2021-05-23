@@ -1,4 +1,4 @@
-module github.com/kentalee/ddns-aliyun
+module github.com/kentalee/ddns
 
 go 1.16
 

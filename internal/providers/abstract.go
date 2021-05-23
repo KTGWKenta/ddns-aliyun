@@ -7,8 +7,8 @@ import (
 
 	"github.com/kentalee/errors"
 
-	"github.com/kentalee/ddns-aliyun/common/defines"
-	"github.com/kentalee/ddns-aliyun/internal/common"
+	"github.com/kentalee/ddns/common/defines"
+	"github.com/kentalee/ddns/internal/common"
 )
 
 var (

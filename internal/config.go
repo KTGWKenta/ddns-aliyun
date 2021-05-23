@@ -3,10 +3,10 @@ package internal
 import (
 	"github.com/kentalee/log"
 
-	"github.com/kentalee/ddns-aliyun/common/config"
-	"github.com/kentalee/ddns-aliyun/common/events"
-	"github.com/kentalee/ddns-aliyun/internal/common"
-	"github.com/kentalee/ddns-aliyun/internal/providers"
+	"github.com/kentalee/ddns/common/config"
+	"github.com/kentalee/ddns/common/events"
+	"github.com/kentalee/ddns/internal/common"
+	"github.com/kentalee/ddns/internal/providers"
 )
 
 var Config = common.STConfig{}

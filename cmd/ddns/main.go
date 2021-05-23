@@ -3,10 +3,10 @@ package main
 import (
 	"github.com/kentalee/log"
 
-	_ "github.com/kentalee/ddns-aliyun/common/config"
-	"github.com/kentalee/ddns-aliyun/common/events"
-	"github.com/kentalee/ddns-aliyun/internal"
-	_ "github.com/kentalee/ddns-aliyun/package/version"
+	_ "github.com/kentalee/ddns/common/config"
+	"github.com/kentalee/ddns/common/events"
+	"github.com/kentalee/ddns/internal"
+	_ "github.com/kentalee/ddns/package/version"
 )
 
 var w = internal.Worker{}

@@ -6,7 +6,7 @@ import (
 
 	"github.com/kentalee/eventbus"
 
-	"github.com/kentalee/ddns-aliyun/common/events"
+	"github.com/kentalee/ddns/common/events"
 )
 
 type flagSubscriber struct {

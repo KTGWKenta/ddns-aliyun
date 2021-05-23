@@ -6,9 +6,9 @@ import (
 	"github.com/kentalee/eventbus"
 	"github.com/kentalee/log"
 
-	"github.com/kentalee/ddns-aliyun/common/defines"
-	"github.com/kentalee/ddns-aliyun/common/events"
-	"github.com/kentalee/ddns-aliyun/internal/providers"
+	"github.com/kentalee/ddns/common/defines"
+	"github.com/kentalee/ddns/common/events"
+	"github.com/kentalee/ddns/internal/providers"
 )
 
 type ipResponse struct {

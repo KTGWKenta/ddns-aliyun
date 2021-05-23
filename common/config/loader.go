@@ -15,7 +15,7 @@ import (
 	"github.com/kentalee/errors"
 	"github.com/kentalee/log"
 
-	"github.com/kentalee/ddns-aliyun/package/utils"
+	"github.com/kentalee/ddns/package/utils"
 )
 
 const (

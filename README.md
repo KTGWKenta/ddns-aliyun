@@ -1,3 +1,3 @@
-# ddns-aliyun
+# ddns
 
-DDNS client for Aliyun
+DDNS client

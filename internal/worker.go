@@ -11,7 +11,7 @@ import (
 	"github.com/kentalee/errors"
 	"github.com/kentalee/log"
 
-	"github.com/kentalee/ddns-aliyun/common/events"
+	"github.com/kentalee/ddns/common/events"
 )
 
 type Worker struct {

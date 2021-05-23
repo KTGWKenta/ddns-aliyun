@@ -12,7 +12,7 @@ import (
 
 	"github.com/kentalee/errors"
 
-	"github.com/kentalee/ddns-aliyun/common/defines"
+	"github.com/kentalee/ddns/common/defines"
 )
 
 func FillNestedField(r *cue.Runtime, source []ast.Decl, value interface{}, path ...string) (newSource []ast.Decl, err error) {

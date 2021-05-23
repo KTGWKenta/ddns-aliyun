@@ -12,10 +12,10 @@ import (
 	"github.com/kentalee/eventbus"
 	"github.com/kentalee/log"
 
-	"github.com/kentalee/ddns-aliyun/common/defines"
-	"github.com/kentalee/ddns-aliyun/common/events"
-	"github.com/kentalee/ddns-aliyun/common/typeUtils/cueAST"
-	"github.com/kentalee/ddns-aliyun/package/utils"
+	"github.com/kentalee/ddns/common/defines"
+	"github.com/kentalee/ddns/common/events"
+	"github.com/kentalee/ddns/common/typeUtils/cueAST"
+	"github.com/kentalee/ddns/package/utils"
 )
 
 const (

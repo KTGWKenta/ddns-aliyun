@@ -21,7 +21,7 @@ CUE_FILES+="${BASE_PATH}/common/config/template.cue"
 TESTCOVER_FILES=`go list ./... | grep -Ev "${PACKAGE}/(tests|tool|package)"`
 
 LOCALPKGS:=github.com/kentalee
-export APP_NAME=ddns-aliyun
+export APP_NAME=ddns
 
 all:clean print fmt lint build
 

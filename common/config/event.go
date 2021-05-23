@@ -6,7 +6,7 @@ import (
 
 	"github.com/kentalee/eventbus"
 
-	"github.com/kentalee/ddns-aliyun/common/events"
+	"github.com/kentalee/ddns/common/events"
 )
 
 // 命令行参数注册、解析
